@@ -253,6 +253,7 @@ dependencies = [
     "edge-tts",
     "onnxruntime",
     "openai",
+    "opencv-python-headless",
     "faster-whisper",
     "google-genai",
     "transformers==4.57.6",

@@ -67,6 +67,7 @@ from videotrans.ui.videoandaudio import Ui_videoandaudio
 from videotrans.ui.videoandsrt import Ui_videoandsrt
 from videotrans.ui.volcenginetts import Ui_volcengineform
 from videotrans.ui.watermark import Ui_watermark
+from videotrans.ui.dewatermark import Ui_dewatermark
 from videotrans.ui.zhipuai import Ui_zhipuaiform
 from videotrans.ui.zijiehuoshan import Ui_zijiehuoshanform
 from videotrans.ui.zijierecognmodel import Ui_zijierecognform
@@ -342,6 +343,11 @@ class SetINIForm(QWidgetBase, Ui_setini):  # <===
 
 
 class WatermarkForm(QWidgetBase, Ui_watermark):  # <===
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+
+class DewatermarkForm(QWidgetBase, Ui_dewatermark):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
 

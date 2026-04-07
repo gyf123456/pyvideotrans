@@ -34,6 +34,7 @@ _module_map = {
 "fn_videoandaudio":".fn_videoandaudio",
 "fn_videoandsrt":".fn_videoandsrt",
 "fn_watermark":".fn_watermark",
+"fn_dewatermark":".fn_dewatermark",
 "gemini":".gemini",
 #"googlecloud":".googlecloud",
 "gptsovits":".gptsovits",

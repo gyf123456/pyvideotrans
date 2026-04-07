@@ -21,7 +21,7 @@ huggingface_hub.configure_http_backend(backend_factory=custom_session_factory)
 
 from videotrans.configure import config
 config.init_run()
-from videotrans.configure.config import tr, params, settings, app_cfg, logger, ROOT_DIR, IS_FROZEN, TEMP_DIR
+from videotrans.configure.config import tr, params, settings, app_cfg, logger, ROOT_DIR, IS_FROZEN, TEMP_DIR, defaulelang
 
 from videotrans import VERSION
 from videotrans.task.job import start_thread
@@ -305,6 +305,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionElevenlabs_key.setText("ElevenLabs.io")
 
         self.actionwatermark.setText(tr("Add watermark to video"))
+        self.actiondewatermark.setText(
+            "视频去水印" if defaulelang == 'zh' else "Remove watermark from video"
+        )
         self.actionsepar.setText(tr("Vocal & instrument Separate"))
         self.actionsetini.setText(tr("Options"))
 
@@ -598,6 +601,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionopenrouter_key.triggered.connect(lambda: self._open_winform('openrouter'))
         self.actionsiliconflow_key.triggered.connect(lambda: self._open_winform('siliconflow'))
         self.actionwatermark.triggered.connect(lambda: self._open_winform('fn_watermark'))
+        self.actiondewatermark.triggered.connect(lambda: self._open_winform('fn_dewatermark'))
         self.actionsepar.triggered.connect(lambda: self._open_winform('fn_separate'))
         self.actionsetini.triggered.connect(lambda: self._open_winform('setini'))
         self.actionvideoandaudio.triggered.connect(lambda: self._open_winform('fn_videoandaudio'))

@@ -71,16 +71,15 @@ import shutil
 import time
 from pathlib import Path
 
-# 引入 soundfile 和 audio 处理
-import soundfile as sf
 import numpy as np  # 新增 numpy 用于声道处理
 from pydub import AudioSegment
 
-# 尝试导入 pyrubberband
+# 尝试导入 soundfile 和 pyrubberband（依赖系统库 libsndfile/rubberband）
 try:
+    import soundfile as sf
     import pyrubberband as pyrb
     HAS_RUBBERBAND = True
-except ImportError:
+except Exception:
     HAS_RUBBERBAND = False
 
 from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang
