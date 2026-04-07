@@ -733,6 +733,9 @@ def tr(lang_key, *kw):
         return lang
 
 
+# Optional WebSocket broadcast callback, registered by videotrans.web.progress
+_ws_broadcast_fn = None
+
 def push_queue(uuid, jsondata):
     """兼容旧的 push_queue"""
     if app_cfg.exit_soft or uuid in app_cfg.stoped_uuid_set:
@@ -744,6 +747,12 @@ def push_queue(uuid, jsondata):
             app_cfg.uuid_logs_queue[uuid].put_nowait(jsondata)
     except Exception as e:
         logger.exception(f'push_queue错误：{e}', exc_info=True)
+    # WebSocket broadcast hook (set by web API, no-op in GUI/CLI mode)
+    if _ws_broadcast_fn is not None:
+        try:
+            _ws_broadcast_fn(uuid, jsondata)
+        except Exception:
+            pass
 
 
 def update_logging_level(new_level_str):

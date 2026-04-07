@@ -6,7 +6,16 @@
       "Bash(grep -E \"\\\\.py$\")",
       "Bash(find /Users/guyanfeng/code/github/pyvideotrans -name *.ui)",
       "Bash(python:*)",
-      "Bash(find /Users/guyanfeng/code/github/pyvideotrans/videotrans -type f -name \"*.py\" -exec grep -l \"QRect\\\\|drawRect\\\\|QPixmap.*scaled\" {})"
+      "Bash(find /Users/guyanfeng/code/github/pyvideotrans/videotrans -type f -name \"*.py\" -exec grep -l \"QRect\\\\|drawRect\\\\|QPixmap.*scaled\" {})",
+      "Bash(ls -1 /Users/guyanfeng/code/github/pyvideotrans/videotrans/translator/*.py)",
+      "Bash(find /Users/guyanfeng/code/github/pyvideotrans -type f \\\\\\(-name *.html -o -name *.vue -o -name *.jsx -o -name *.tsx -o -name *.css -o -name *.js \\\\\\) -not -path */.venv/* -not -path *node_modules*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vite:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }
