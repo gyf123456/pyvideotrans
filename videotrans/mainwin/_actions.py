@@ -120,7 +120,7 @@ class WinAction(WinActionSub):
             self.main.model_name.setDisabled(False)
             self.main.model_name.clear()
             if recogn_type in [recognition.FASTER_WHISPER, recognition.OPENAI_WHISPER, recognition.Faster_Whisper_XXL,recognition.WHISPERX_API]:
-                self.main.model_name.addItems(settings.WHISPER_MODEL_LIST)
+                self.main.model_name.addItems(settings.WHISPER_MODEL_LIST if recogn_type != recognition.OPENAI_WHISPER else contants.Openai_Whisper_Models)
             elif recogn_type == recognition.Deepgram:
                 self.main.model_name.addItems(contants.DEEPGRAM_MODEL)
             elif recogn_type == recognition.Whisper_CPP:
@@ -192,6 +192,10 @@ class WinAction(WinActionSub):
             self.main.voice_role.clear()
             self.main.current_rolelist = ['No']+contants.XAITTS_ROLES.split(',')
             self.main.voice_role.addItems(self.main.current_rolelist)
+        elif type == tts.XIAOMI_TTS:
+            self.main.voice_role.clear()
+            self.main.current_rolelist = ['No']+contants.MITTS_ROLES.split(',')
+            self.main.voice_role.addItems(self.main.current_rolelist)
         elif type == tts.QWEN_TTS:
             self.main.voice_role.clear()
             self.main.current_rolelist = list(tools.get_qwen3tts_rolelist().keys())
@@ -215,6 +219,10 @@ class WinAction(WinActionSub):
         elif type == tts.ELEVENLABS_TTS:
             self.main.voice_role.clear()
             self.main.current_rolelist = tools.get_elevenlabs_role()
+            self.main.voice_role.addItems(self.main.current_rolelist)
+        elif type == tts.CAMB_TTS:
+            self.main.voice_role.clear()
+            self.main.current_rolelist = tools.get_camb_role()
             self.main.voice_role.addItems(self.main.current_rolelist)
         elif self.change_by_lang(type):
             self.set_voice_role(self.main.target_language.currentText())
@@ -245,6 +253,11 @@ class WinAction(WinActionSub):
             self.main.voice_role.addItems(self.main.current_rolelist)
         elif type == tts.COSYVOICE_TTS:
             rolelist = tools.get_cosyvoice_role()
+            self.main.voice_role.clear()
+            self.main.current_rolelist = list(rolelist.keys())
+            self.main.voice_role.addItems(self.main.current_rolelist)
+        elif type == tts.OMNIVOICE_TTS:
+            rolelist = tools.get_omnivoice_role()
             self.main.voice_role.clear()
             self.main.current_rolelist = list(rolelist.keys())
             self.main.voice_role.addItems(self.main.current_rolelist)
@@ -315,7 +328,6 @@ class WinAction(WinActionSub):
             show_rolelist = tools.get_doubao_rolelist()
         elif tts_type == tts.MINIMAXI_TTS:
             show_rolelist = tools.get_minimaxi_rolelist()
-
         else:
             # AzureTTS
             show_rolelist = tools.get_azure_rolelist()
@@ -427,6 +439,29 @@ class WinAction(WinActionSub):
                 return True
         return True
 
+
+    def check_name_length(self):
+        if sys.platform != 'win32':
+            return True
+        from PySide6.QtWidgets import QMessageBox
+        for it in self.queue_mp4:
+            _itlen=len(it)
+            _namelen=len(Path(it).name)
+            if  _itlen>=170 or _namelen>=90:
+                reply = QMessageBox.question(
+                    self.main,
+                    tr("The filename is too long"),
+                    tr("Filename length check",_namelen,_itlen)+f"\n\n{it}",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
+                )
+
+                if reply != QMessageBox.StandardButton.Yes:
+                    return False
+                return True
+        return True
+
+
     # 检测开始状态并启动
     def check_start(self):
         # 已在执行中，则停止
@@ -504,8 +539,9 @@ class WinAction(WinActionSub):
 
         # 人声背景音分离 添加背景音频
         self.cfg['is_separate'] = self.main.is_separate.isChecked()
-        if self.cfg['voice_role'] == 'No':
-            self.cfg['is_separate'] = False
+        self.cfg['embed_bgm'] = self.main.embed_bgm.isChecked()
+        #if self.cfg['voice_role'] == 'No':
+        #    self.cfg['is_separate'] = False
         self.cfg['back_audio'] = self.main.back_audio.text().strip()
         self.cfg['enable_diariz'] = self.main.enable_diariz.isChecked()
         self.cfg['recogn2pass'] = self.main.recogn2pass.isChecked()
@@ -577,6 +613,9 @@ class WinAction(WinActionSub):
                 deepseek.openwin()
                 return
         # 检查输入 输出目录
+        if self.check_name_length() is not True:
+            self.main.startbtn.setDisabled(False)
+            return
         if self.check_output() is not True:
             self.main.startbtn.setDisabled(False)
             return
@@ -599,7 +638,7 @@ class WinAction(WinActionSub):
 
         if self.main.recogn_type.currentIndex() == recognition.FASTER_WHISPER or self.main.app_mode == 'biaozhun':
             # 背景音量
-            settings['loop_backaudio'] = self.main.is_loop_bgm.isChecked()
+            settings['loop_backaudio'] = self.main.is_loop_bgm.currentIndex()
             try:
                 settings['backaudio_volume'] = float(self.main.bgmvolume.text())
             except ValueError:
@@ -954,7 +993,7 @@ class WinAction(WinActionSub):
                 self.main.tts_type.setCurrentIndex(0)
                 QTimer.singleShot(100,lambda: self.main.tts_type.setCurrentIndex(currentIndex))
         elif d['type'] == 'refreshmodel_list':
-            if self.main.recogn_type.currentIndex() in [recognition.FASTER_WHISPER, recognition.OPENAI_WHISPER,recognition.Faster_Whisper_XXL,recognition.Whisper_CPP]:
+            if self.main.recogn_type.currentIndex() in [recognition.FASTER_WHISPER, recognition.Faster_Whisper_XXL,recognition.Whisper_CPP]:
                 current_model_name = self.main.model_name.currentText()
                 self.main.model_name.clear()
                 self.main.model_name.addItems(settings.Whisper_CPP_MODEL_LIST if self.main.recogn_type.currentIndex()==recognition.Whisper_CPP else settings.WHISPER_MODEL_LIST)

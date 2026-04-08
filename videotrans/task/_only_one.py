@@ -1,5 +1,6 @@
 # 执行单个视频翻译任务时 暂停等待
 import json
+import traceback
 import time
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -105,20 +106,23 @@ class Worker(QThread):
                         # 倒计时中
                         app_cfg.task_countdown -= 1
 
-                    # 重新整理赋值给 trk.queue_tts
-                    trk.queue_tts=json.loads(Path(f'{trk.cfg.cache_folder}/queue_tts.json').read_text(encoding='utf-8'))
+                    # 不需要更新 trk.queue_tts，以便在最后一步使用各种配音渠道支持的控制符号重新配音，而不将该控制符号写入字幕。                    #trk.queue_tts=json.loads(Path(f'{trk.cfg.cache_folder}/queue_tts.json').read_text(encoding='utf-8'))
 
 
             if not self._exit():
                 trk.align()
             
             if not self._exit():
+                trk.recogn2pass()
+                
+            if not self._exit():
                 trk.assembling()
             
             if not self._exit():
                 trk.task_done()
         except Exception as e:
-            self._post(text=get_msg_from_except(e), type='error')
+            detail_back=(traceback.format_exc()).strip()
+            self._post(text=get_msg_from_except(e)+f"\n{detail_back}", type='error')
 
     def _post(self, text='', type='logs'):
         try:

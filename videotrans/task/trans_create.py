@@ -118,7 +118,7 @@ class TransCreate(BaseTask):
         # 判断如果是音频，则到生成音频结束，无需合并，并且无需分离视频、无需背景音处理
         if self.cfg.ext in contants.AUDIO_EXITS:
             self.is_audio_trans = True
-            self.cfg.is_separate = False
+            #self.cfg.is_separate = False
             self.shoud_hebing = False
 
         # 没有设置目标语言，不配音不翻译
@@ -130,7 +130,7 @@ class TransCreate(BaseTask):
             self.shoud_dubbing = False
 
         if self.cfg.app_mode == 'tiqu':
-            self.cfg.is_separate = False
+            #self.cfg.is_separate = False
             self.cfg.enable_diariz = False
             self.shoud_dubbing = False
 
@@ -446,10 +446,7 @@ class TransCreate(BaseTask):
     # 配音后再次对配音文件进行识别，以便生成简短的字幕，
     # 开始识别
     def recogn2pass(self) -> None:
-        logger.debug(f'进入二次识别')
-        if not self.cfg.recogn2pass or self._exit(): return
-        if not self.shoud_dubbing:
-            logger.debug(f'跳过二次识别, 因未进行配音')
+        if not self.shoud_dubbing or not self.cfg.recogn2pass or self._exit(): 
             return
         # 如果不嵌入字幕，或嵌入双字幕，则跳过
         if self.cfg.subtitle_type > 2 and (self.cfg.source_language_code != self.cfg.target_language_code):
@@ -459,9 +456,11 @@ class TransCreate(BaseTask):
         if not tools.vail_file(self.cfg.target_wav):
             logger.debug(f'跳过二次识别，因无配音音频文件')
             return
-
+            
         self.precent += 3
         self._signal(text=tr("Secondary speech recognition of dubbing files"))
+        logger.debug(f'进入二次识别')
+
         shibie_audio = f'{self.cfg.cache_folder}/recogn2pass-{time.time()}.wav'
         outsrt_file = f'{self.cfg.cache_folder}/recogn2pass-{time.time()}.srt'
         try:
@@ -473,88 +472,95 @@ class TransCreate(BaseTask):
             if not tools.vail_file(shibie_audio):
                 logger.exception(f'二次识别配音音频生成字幕时，预处理音频失败，静默跳过:{e}', exc_info=True)
                 return
+        
+        try:
+            # 判断原渠道是否支持目标语言的识别 self.cfg.target_language_code
+            recogn_type = self.cfg.recogn_type
+            model_name = self.cfg.model_name
+            detect_language = self.cfg.target_language_code.split('-')[0]
 
-        # 判断原渠道是否支持目标语言的识别 self.cfg.target_language_code
-        recogn_type = self.cfg.recogn_type
-        model_name = self.cfg.model_name
-        detect_language = self.cfg.target_language_code.split('-')[0]
+            if recogn_allow_lang(langcode=self.cfg.target_language_code, recogn_type=recogn_type,
+                                 model_name=model_name) is not True:
+                recogn_type = FASTER_WHISPER
+                model_name = 'large-v3-turbo'
 
-        if recogn_allow_lang(langcode=self.cfg.target_language_code, recogn_type=recogn_type,
-                             model_name=model_name) is not True:
-            recogn_type = FASTER_WHISPER
-            model_name = 'large-v3-turbo'
+            if recogn_type == Faster_Whisper_XXL:
+                xxl_path = settings.get('Faster_Whisper_XXL', 'Faster_Whisper_XXL.exe')
+                cmd = [
+                    xxl_path,
+                    shibie_audio,
+                    "-pp",
+                    "-f", "srt"
+                ]
+                cmd.extend(['-l', detect_language.split('-')[0]])
+                prompt = settings.get(f'initial_prompt_{detect_language}')
+                if prompt:
+                    cmd += ['--initial_prompt', prompt]
+                cmd.extend(['--model', model_name, '--output_dir', self.cfg.cache_folder])
 
-        if recogn_type == Faster_Whisper_XXL:
-            xxl_path = settings.get('Faster_Whisper_XXL', 'Faster_Whisper_XXL.exe')
-            cmd = [
-                xxl_path,
-                shibie_audio,
-                "-pp",
-                "-f", "srt"
-            ]
-            cmd.extend(['-l', detect_language.split('-')[0]])
-            prompt = settings.get(f'initial_prompt_{detect_language}')
-            if prompt:
-                cmd += ['--initial_prompt', prompt]
-            cmd.extend(['--model', model_name, '--output_dir', self.cfg.cache_folder])
+                txt_file = Path(xxl_path).parent.resolve().as_posix() + '/pyvideotrans.txt'
 
-            txt_file = Path(xxl_path).parent.resolve().as_posix() + '/pyvideotrans.txt'
+                if Path(txt_file).exists():
+                    cmd.extend(Path(txt_file).read_text(encoding='utf-8').strip().split(' '))
 
-            if Path(txt_file).exists():
-                cmd.extend(Path(txt_file).read_text(encoding='utf-8').strip().split(' '))
+                cmdstr = " ".join(cmd)
+                logger.debug(f'Faster_Whisper_XXL: {cmdstr=}\n{outsrt_file=}')
+                self._external_cmd_with_wrapper(cmd)
+            elif recogn_type == Whisper_CPP:
+                cpp_path = settings.get('Whisper_cpp', 'whisper-cli')
+                cmd = [
+                    cpp_path,
+                    "-f",
+                    shibie_audio,
+                    "-osrt",
+                    "-np"
 
-            cmdstr = " ".join(cmd)
-            logger.debug(f'Faster_Whisper_XXL: {cmdstr=}\n{outsrt_file=}')
-            self._external_cmd_with_wrapper(cmd)
-        elif recogn_type == Whisper_CPP:
-            cpp_path = settings.get('Whisper_cpp', 'whisper-cli')
-            cmd = [
-                cpp_path,
-                "-f",
-                shibie_audio,
-                "-osrt",
-                "-np"
+                ]
+                cmd += ["-l", detect_language]
+                prompt = settings.get(f'initial_prompt_{detect_language}')
+                if prompt:
+                    cmd += ['--prompt', prompt]
+                cpp_folder = Path(cpp_path).parent.resolve().as_posix()
+                if not Path(f'{cpp_folder}/models/{model_name}').is_file():
+                    logger.error(tr('The model does not exist. Please download the model to the {} directory first.',
+                                           f'{cpp_folder}/models'))
+                    return
+                txt_file = cpp_folder + '/pyvideotrans.txt'
+                if Path(txt_file).exists():
+                    cmd.extend(Path(txt_file).read_text(encoding='utf-8').strip().split(' '))
+                cmd.extend(['-m', f'models/{model_name}', '-of', outsrt_file[:-4]])
+                logger.debug(f'Whisper.cpp: {cmd=}')
+                self._external_cmd_with_wrapper(cmd)
+            else:
+                # -1不启用，0不限制数量，>0加1为指定的说话人数量
+                logger.debug(f'[trans_create]:二次识别')
+                raw_subtitles = run_recogn(
+                    recogn_type=recogn_type,
+                    uuid=self.uuid,
+                    model_name=model_name,
+                    audio_file=shibie_audio,
+                    detect_language=detect_language,
+                    cache_folder=self.cfg.cache_folder,
+                    is_cuda=self.cfg.is_cuda,
+                    recogn2pass=True  # 二次识别
+                )
+                if self._exit(): return
+                if not raw_subtitles:
+                    logger.error('二次识别出错：' + tr('recogn result is empty'))
+                self._save_srt_target(raw_subtitles, outsrt_file)
 
-            ]
-            cmd += ["-l", detect_language]
-            prompt = settings.get(f'initial_prompt_{detect_language}')
-            if prompt:
-                cmd += ['--prompt', prompt]
-            cpp_folder = Path(cpp_path).parent.resolve().as_posix()
-            if not Path(f'{cpp_folder}/models/{model_name}').is_file():
-                logger.error(tr('The model does not exist. Please download the model to the {} directory first.',
-                                       f'{cpp_folder}/models'))
+            if not tools.vail_file(outsrt_file):
+                logger.error(f'二次识别配音文件失败，原因未知')
                 return
-            txt_file = cpp_folder + '/pyvideotrans.txt'
-            if Path(txt_file).exists():
-                cmd.extend(Path(txt_file).read_text(encoding='utf-8').strip().split(' '))
-            cmd.extend(['-m', f'models/{model_name}', '-of', outsrt_file[:-4]])
-            logger.debug(f'Whisper.cpp: {cmd=}')
-            self._external_cmd_with_wrapper(cmd)
-        else:
-            # -1不启用，0不限制数量，>0加1为指定的说话人数量
-            logger.debug(f'[trans_create]:二次识别')
-            raw_subtitles = run_recogn(
-                recogn_type=recogn_type,
-                uuid=self.uuid,
-                model_name=model_name,
-                audio_file=shibie_audio,
-                detect_language=detect_language,
-                cache_folder=self.cfg.cache_folder,
-                is_cuda=self.cfg.is_cuda,
-                recogn2pass=True  # 二次识别
-            )
-            if self._exit(): return
-            if not raw_subtitles:
-                logger.error('二次识别出错：' + tr('recogn result is empty'))
-            self._save_srt_target(raw_subtitles, outsrt_file)
-
-        if not tools.vail_file(outsrt_file):
-            logger.error(f'二次识别配音文件失败，原因未知')
+            # 覆盖
+            shutil.copy2(outsrt_file, self.cfg.target_sub)
+            self._signal(text='STT 2 pass end')
+            logger.debug('二次识别成功完成')
+        
+        except Exception as e:
+            logger.exception(f'二次识别配音音频生成字幕时，预处理音频失败，静默跳过:{e}', exc_info=True)
             return
-        # 覆盖
-        shutil.copy2(outsrt_file, self.cfg.target_sub)
-        self._signal(text='STT 2 pass end')
+
         return True
 
     def diariz(self):
@@ -892,12 +898,13 @@ class TransCreate(BaseTask):
         if tools.vail_file(self.cfg.vocal) and tools.vail_file(self.cfg.instrument):
             return
         title = tr('Separating vocals and background music, which may take a longer time')
+        uvr_models=settings.get('uvr_models')
         tools.down_file_from_ms(f'{ROOT_DIR}/models/onnx', [
-            "https://www.modelscope.cn/models/himyworld/videotrans/resolve/master/onnx/UVR-MDX-NET-Inst_HQ_4.onnx"
+            f"https://www.modelscope.cn/models/himyworld/videotrans/resolve/master/onnx/{uvr_models}.onnx"
         ], callback=self._process_callback)
         from videotrans.process.prepare_audio import vocal_bgm
         # 返回 False None 失败
-        kw = {"input_file": tmpfile, "vocal_file": self.cfg.vocal, "instr_file": self.cfg.instrument}
+        kw = {"input_file": tmpfile, "vocal_file": self.cfg.vocal, "instr_file": self.cfg.instrument,"uvr_models":uvr_models}
         try:
             rs = self._new_process(callback=vocal_bgm, title=title, is_cuda=False, kwargs=kw)
             if rs and tools.vail_file(self.cfg.vocal) and tools.vail_file(self.cfg.instrument):
@@ -942,7 +949,7 @@ class TransCreate(BaseTask):
 
         # 取出每一条字幕，行号\n开始时间 --> 结束时间\n内容
         for i, it in enumerate(subs):
-            if it['end_time'] <= it['start_time'] or not it['text'].strip():
+            if it['end_time'] < it['start_time'] or not it['text'].strip():
                 continue
             # 判断是否存在单独设置的行角色，如果不存在则使用全局
             voice = line_roles.get(f'{it["line"]}', voice_role)
@@ -984,7 +991,7 @@ class TransCreate(BaseTask):
 
         # 具体配音操作
         run_tts(
-            queue_tts=copy.deepcopy(self.queue_tts),
+            queue_tts=self.queue_tts,
             language=self.cfg.target_language_code,
             uuid=self.uuid,
             tts_type=self.cfg.tts_type,
@@ -1075,7 +1082,7 @@ class TransCreate(BaseTask):
             logger.exception(f'添加背景音乐失败:{str(e)}', exc_info=True)
 
     def _separate(self) -> None:
-        if self._exit() or not self.shoud_separate:
+        if self._exit() or not self.shoud_separate or not self.cfg.embed_bgm:
             return
         # 如果背景音频分离失败，则静默返回
         if not tools.vail_file(self.cfg.instrument):
@@ -1090,14 +1097,18 @@ class TransCreate(BaseTask):
 
             instrument_file = self.cfg.instrument
             logger.debug(f'合并背景音 {beishu=},{atime=},{vtime=}')
-            if settings.get('loop_backaudio') and atime + 1000 < vtime:
-                # 背景音连接延长片段
-                file_list = [instrument_file for n in range(beishu + 1)]
-                concat_txt = self.cfg.cache_folder + f'/{time.time()}.txt'
-                tools.create_concat_txt(file_list, concat_txt=concat_txt)
-                tools.concat_multi_audio(concat_txt=concat_txt,
-                                         out=self.cfg.cache_folder + "/instrument-concat.wav")
-                instrument_file = self.cfg.cache_folder + f"/instrument-concat.wav"
+            if atime + 1000 < vtime:
+                if int(settings.get('loop_backaudio'))==1:
+                    # 背景音连接延长片段
+                    file_list = [instrument_file for n in range(beishu + 1)]
+                    concat_txt = self.cfg.cache_folder + f'/{time.time()}.txt'
+                    tools.create_concat_txt(file_list, concat_txt=concat_txt)
+                    tools.concat_multi_audio(concat_txt=concat_txt,
+                                             out=self.cfg.cache_folder + "/instrument-concat.wav")
+                    instrument_file = self.cfg.cache_folder + f"/instrument-concat.wav"
+                else:
+                    # 延长背景音
+                    tools.change_speed_rubberband(instr_file, self.cfg.cache_folder + f"/instrument-concat.wav", vtime)
             # 背景音合并配音
             self._backandvocal(self.cfg.instrument, self.cfg.target_wav)
         except Exception as e:
@@ -1137,7 +1148,10 @@ class TransCreate(BaseTask):
                                                                                         'yu'] else
             settings.get('other_len', 60))
         target_sub_list = tools.get_subtitle_from_srt(self.cfg.target_sub)
-
+        
+        srt_string = ""
+        # 双硬字幕时的两种语言字幕分割符，用于定义不同样式
+        _join_flag=''
         # 双硬 双软字幕组装
         if self.cfg.subtitle_type in [3, 4]:
             source_sub_list = tools.get_subtitle_from_srt(self.cfg.source_sub)
@@ -1148,23 +1162,24 @@ class TransCreate(BaseTask):
                                                                                             'yu'] else
                 settings.get('other_len', 60))
 
-            srt_string = ""
             # 双语字幕
+            # 判断 双硬字幕 and 存在 ass.json 文件 and  (Bottom_Fontsize != Fontsize or PrimaryColour!=Bottom_PrimaryColour) 需要 对双语字幕的第2行设置不同颜色和尺寸
+            _join_flag=self._get_join_flag()
+                    
             for i, it in enumerate(target_sub_list):
                 # 换行
                 _text = tools.simple_wrap(it['text'].strip(), maxlen, self.cfg.target_language_code)
                 srt_string += f"{it['line']}\n{it['time']}\n"
                 if source_length > 0 and i < source_length:
                     _text_source=tools.simple_wrap(source_sub_list[i]['text'], source_maxlen, self.cfg.source_language_code)
-                    _text=f'{_text_source}\n{_text}' if self.cfg.output_srt==1 else f'{_text}\n{_text_source}'
+                    _text=f'{_text_source}\n{_join_flag}{_text}' if self.cfg.output_srt==1 else f'{_text}\n{_join_flag}{_text_source}'
                 srt_string += f"{_text}\n\n"
+            srt_string=srt_string.strip()
             process_end_subtitle = f"{self.cfg.cache_folder}/shuang.srt"
-            Path(process_end_subtitle).write_text(srt_string.strip(), encoding='utf-8')
-            shutil.copy2(process_end_subtitle, self.cfg.target_dir + "/shuang.srt")
-
+            Path(process_end_subtitle).write_text(srt_string, encoding='utf-8')
+            Path(self.cfg.target_dir + "/shuang.srt").write_text(srt_string.replace('###','') if _join_flag=='###' else srt_string, encoding='utf-8')
         else:
             # 单字幕，需处理字符数换行
-            srt_string = ""
             for i, it in enumerate(target_sub_list):
                 tmp = tools.simple_wrap(it['text'].strip(), maxlen, self.cfg.target_language_code)
                 srt_string += f"{it['line']}\n{it['time']}\n{tmp.strip()}\n\n"
@@ -1183,6 +1198,25 @@ class TransCreate(BaseTask):
         process_end_subtitle_ass = tools.set_ass_font(process_end_subtitle)
         basename = os.path.basename(process_end_subtitle_ass)
         return basename, subtitle_langcode
+
+
+    def _get_join_flag(self):
+        _join_flag=""
+        if self.cfg.subtitle_type!=3 or not Path(f'{ROOT_DIR}/videotrans/ass.json').exists():
+            return _join_flag
+        try:
+            assjson=json.loads(Path(f'{ROOT_DIR}/videotrans/ass.json').read_text(encoding='utf-8'))
+        except Exception as e:
+            logger.debug(f'读取 ass.json 错误，忽略:{e}')
+            return _join_flag
+        else:
+            for k,v in assjson.items():
+                if k.startswith('Bottom_') and v!= assjson.get(k[7:]):
+                    _join_flag='###'
+                    break
+        return _join_flag
+
+
 
     # 视频定格最后一帧
     def _video_extend(self, duration_ms=1000):
@@ -1253,9 +1287,7 @@ class TransCreate(BaseTask):
                 threading.Thread(target=_output, daemon=True).start()
             except Exception:
                 pass
-            # 二次识别
-            if self.cfg.recogn2pass and self.shoud_dubbing:
-                self.recogn2pass()
+
             # 添加背景音乐
             self._back_music()
             # 重新嵌入分离出的背景音
@@ -1524,7 +1556,6 @@ class TransCreate(BaseTask):
             raise RuntimeError(msg)
 
         os.chdir(ROOT_DIR)
-        print(f'{tmp_target_mp4=},{self.cfg.targetdir_mp4=}')
         if Path(tmp_target_mp4).exists():
             try:
                 shutil.copy2(tmp_target_mp4, self.cfg.targetdir_mp4)

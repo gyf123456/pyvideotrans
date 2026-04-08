@@ -1,7 +1,7 @@
 
-> **Recall.ai - Meeting Transcription API**
+> Sponsors: **[Recall.ai](https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=jianchang512-pyvideotrans) - Meeting Transcription API**
 >
-> If you’re looking for a transcription API for meetings, consider checking out **[Recall.ai](https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=jianchang512-pyvideotrans)** , an API that works with Zoom, Google Meet, Microsoft Teams, and more. Recall.ai diarizes by pulling the speaker data and separate audio streams from the meeting platforms, which means 100% accurate speaker diarization with actual speaker names.
+> If you’re looking for a transcription API for meetings, consider checking out **[Recall.ai](https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=jianchang512-pyvideotrans)** , an API that works with Zoom, Google Meet, Microsoft Teams, and more
 
 
 # pyVideoTrans 
@@ -86,6 +86,9 @@ cd pyvideotrans
 
 # 2. 安装依赖 (使用 uv 自动同步环境)
 uv sync
+
+# 如果需要 qwen-tts qwen-asr 本地渠道，请执行 `uv sync --extra qwen-tts --extra qwen-asr`
+
 ```
 
 ### 4. 启动软件

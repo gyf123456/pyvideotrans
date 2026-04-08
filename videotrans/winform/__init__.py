@@ -6,11 +6,13 @@ _module_map = {
 "azure":".azure",
 "azuretts":".azuretts",
 "baidu":".baidu",
+"cambtts":".cambtts",
 "chatgpt":".chatgpt",
 "chatterbox":".chatterbox",
 "chattts":".chattts",
 "clone":".clone",
 "cosyvoice":".cosyvoice",
+"omnivoice":".omnivoice",
 "deepgram":".deepgram",
 "deepL":".deepL",
 "deepLX":".deepLX",
@@ -65,6 +67,7 @@ _module_map = {
 "zijierecognmodel":".zijierecognmodel",
 "whisperxapi":".whisperxapi",
 "xaitts":".xaitts",
+"mitts":".mitts",
 }
 
 _loaded_modules = {}  # 用于缓存已经加载过的模块

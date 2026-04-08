@@ -176,9 +176,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.align_sub_audio.setToolTip(tr("If selected, it will force the subtitles and audio to align."))
 
         self.enable_cuda.setText(tr("Enable CUDA?"))
+        self.embed_bgm.setText(tr("embed_bgm"))
         self.is_separate.setText(tr("Retain original background sound"))
-        self.is_separate.setToolTip(
-            tr(
+        self.is_separate.setToolTip(tr(
                 "If selected, separate human voice and background sound, and finally output video will embed background sound"))
         self.startbtn.setText(tr("Start"))
         self.addbackbtn.setText(tr("Add background audio"))
@@ -210,6 +210,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionlibretranslate_key.setText("LibreTranslate API")
         self.actionopenaitts_key.setText("OpenAI TTS")
         self.actionxaitts_key.setText("X.AI TTS")
+        self.actionmitts_key.setText("xiaomi TTS")
         self.actionqwentts_key.setText("Qwen3 TTS(Bailian)")
         self.actionopenairecognapi_key.setText(
             tr("OpenAI Speech to Text API"))
@@ -243,6 +244,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actiontts_gptsovits.setText("GPT-SoVITS TTS")
         self.actiontts_chatterbox.setText("ChatterBox TTS")
         self.actiontts_cosyvoice.setText("CosyVoice TTS")
+        self.actiontts_omnivoice.setText("OmniVoice TTS")
         self.actiontts_qwenttslocal.setText(f"Qwen3 TTS({tr('Local')})")
         self.actiontts_fishtts.setText("Fish TTS")
         self.actiontts_f5tts.setText("F5-TTS/Index-TTS/VoxCPM/SparK-TTS/Dia-TTS")
@@ -302,6 +304,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionazure_key.setText(tr("AzureOpenAI Translation"))
         self.actionazure_tts.setText(tr("AzureAI TTS"))
         self.actiongemini_key.setText("Gemini AI")
+        self.actioncamb_key.setText("CAMB AI")
         self.actionElevenlabs_key.setText("ElevenLabs.io")
 
         self.actionwatermark.setText(tr("Add watermark to video"))
@@ -377,6 +380,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.enable_diariz.setChecked(bool(params.get('enable_diariz', False)))
         self.nums_diariz.setCurrentIndex(int(params.get('nums_diariz', 0)))
         self.is_separate.setChecked(bool(params.get('is_separate', False)))
+        self.embed_bgm.setChecked(bool(params.get('embed_bgm', True)))
 
         self.rephrase.setCurrentIndex(int(params.get('rephrase', 0)))
 
@@ -384,7 +388,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.copysrt_rawvideo.setChecked(bool(params.get('copysrt_rawvideo', False)))
 
         self.bgmvolume.setText(str(settings.get('backaudio_volume', 0.8)))
-        self.is_loop_bgm.setChecked(bool(settings.get('loop_backaudio', True)))
+        self.is_loop_bgm.setCurrentIndex(int(settings.get('loop_backaudio', 0)))
 
         if platform.system() == 'Darwin':
             self.enable_cuda.setChecked(False)
@@ -432,6 +436,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif tts_type == tts.COSYVOICE_TTS:
             rolelist = tools.get_cosyvoice_role()
             self.voice_role.addItems(list(rolelist.keys()) if rolelist else ['clone'])
+        elif tts_type == tts.OMNIVOICE_TTS:
+            rolelist = tools.get_omnivoice_role()
+            self.voice_role.addItems(list(rolelist.keys()) if rolelist else ['clone'])
         elif tts_type in [tts.F5_TTS, tts.INDEX_TTS, tts.SPARK_TTS, tts.VOXCPM_TTS,
                           tts.DIA_TTS]:
             rolelist = tools.get_f5tts_role()
@@ -442,11 +449,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif tts_type == tts.ELEVENLABS_TTS:
             rolelist = tools.get_elevenlabs_role()
             self.voice_role.addItems(['No'] + rolelist)
+        elif tts_type == tts.CAMB_TTS:
+            rolelist = tools.get_camb_role()
+            self.voice_role.addItems(rolelist)
         elif tts_type == tts.OPENAI_TTS:
             rolelist = params.get('openaitts_role', '')
             self.voice_role.addItems(['No'] + rolelist.split(','))
         elif tts_type == tts.XAI_TTS:
             self.voice_role.addItems(['No'] + contants.XAITTS_ROLES.split(','))
+        elif tts_type == tts.XIAOMI_TTS:
+            self.voice_role.addItems(['No'] + contants.MITTS_ROLES.split(','))
         elif tts_type == tts.QWEN_TTS:
             rolelist = list(tools.get_qwen3tts_rolelist().keys())
             self.voice_role.addItems(rolelist)
@@ -504,6 +516,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif recogn_type == recognition.HUGGINGFACE_ASR:
             curr = list(recognition.HUGGINGFACE_ASR_MODELS.keys())
             self.model_name.addItems(curr)
+        elif recogn_type == recognition.OPENAI_WHISPER:
+            self.model_name.addItems(contants.Openai_Whisper_Models)
+            curr = contants.Openai_Whisper_Models
         else:
             self.model_name.addItems(settings.WHISPER_MODEL_LIST)
             curr = settings.WHISPER_MODEL_LIST
@@ -558,6 +573,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionazure_key.triggered.connect(lambda: self._open_winform('azure'))
         self.actionazure_tts.triggered.connect(lambda: self._open_winform('azuretts'))
         self.actiongemini_key.triggered.connect(lambda: self._open_winform('gemini'))
+        self.actioncamb_key.triggered.connect(lambda: self._open_winform('cambtts'))
         self.actiontencent_key.triggered.connect(lambda: self._open_winform('tencent'))
         self.actionchatgpt_key.triggered.connect(lambda: self._open_winform('chatgpt'))
         self.actionlibretranslate_key.triggered.connect(lambda: self._open_winform('libre'))
@@ -585,9 +601,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actiontts_gptsovits.triggered.connect(lambda: self._open_winform('gptsovits'))
         self.actiontts_chatterbox.triggered.connect(lambda: self._open_winform('chatterbox'))
         self.actiontts_cosyvoice.triggered.connect(lambda: self._open_winform('cosyvoice'))
+        self.actiontts_omnivoice.triggered.connect(lambda: self._open_winform('omnivoice'))
         self.actiontts_qwenttslocal.triggered.connect(lambda: self._open_winform('qwenttslocal'))
         self.actionopenaitts_key.triggered.connect(lambda: self._open_winform('openaitts'))
         self.actionxaitts_key.triggered.connect(lambda: self._open_winform('xaitts'))
+        self.actionmitts_key.triggered.connect(lambda: self._open_winform('mitts'))
         self.actionqwentts_key.triggered.connect(lambda: self._open_winform('qwentts'))
         self.actionopenairecognapi_key.triggered.connect(lambda: self._open_winform('openairecognapi'))
         self.actiontts_fishtts.triggered.connect(lambda: self._open_winform('fishtts'))

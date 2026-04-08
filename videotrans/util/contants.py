@@ -115,7 +115,7 @@ DEEPGRAM_MODEL = [
 # 支持的视频格式
 VIDEO_EXTS = ["mp4", "mkv", "mpeg", "avi", "mov", "mts", "webm", "ogg", "ts", "flv"]
 # 支持的音频格式
-AUDIO_EXITS = ["mp3", "wav", "aac", "flac", "m4a"]
+AUDIO_EXITS = ["mp3", "wav", "aac", "flac", "m4a","ogg"]
 
 ChatTTS_VOICE="11,12,16,2222,4444,6653,7869,9999,5,13,14,1111,3333,4099,5099,5555,8888,6666,7777"
 # 缺省 gemini 模型
@@ -123,6 +123,7 @@ DEFAULT_GEMINI_MODEL = "gemini-3-pro-preview,gemini-3-flash-preview,gemini-2.5-p
 # openai-tts音色
 OPENAITTS_ROLES = "No,alloy,ash,ballad,coral,echo,fable,onyx,nova,sage,shimmer,verse"
 XAITTS_ROLES='eve,ara,rex,sal,leo'
+MITTS_ROLES='mimo_default,default_zh,default_en'
 # gemini-tts 音色
 GEMINITTS_ROLES = "No,Zephyr,Puck,Charon,Kore,Fenrir,Leda,Orus,Aoede,Callirrhoe,Autonoe,Enceladus,Iapetus,Umbriel,Algieba,Despina,Erinome,Algenib,Rasalgethi,Laomedeia,Achernar,Alnilam,Schedar,Gacrux,Pulcherrima,Achird,Zubenelgenubi,Vindemiatrix,Sadachbia,Sadaltager,Sulafat"
 
@@ -145,3 +146,4 @@ Guiji_Model="Pro/zai-org/GLM-5,Pro/moonshotai/Kimi-K2.5,Pro/deepseek-ai/DeepSeek
 Ai302_Models="deepseek-chat"
 Zijiehuoshan_Model="doubao-seed-2-0-pro-260215,doubao-seed-2-0-lite-260215,doubao-seed-2-0-mini-260215,doubao-seed-1-8-251228,doubao-seed-1-6-251015,doubao-seed-1-6-lite-251015,doubao-seed-1-6-flash-250828,deepseek-v3-2-251201,glm-4-7-251222,doubao-1-5-pro-32k-250115,kimi-k2-thinking-251104,doubao-ceshi"
 Whisper_Models="tiny,tiny.en,base,base.en,small,small.en,medium,medium.en,large-v3-turbo,large-v1,large-v2,large-v3,distil-large-v3,distil-large-v3.5"
+Openai_Whisper_Models=["tiny","tiny.en","base","base.en","small","small.en","medium","medium.en","large-v3-turbo","large-v1","large-v2","large-v3"]

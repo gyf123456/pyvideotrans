@@ -58,7 +58,8 @@ class Ui_setini(object):
                 "show_more_settings": "为避免过多参数造成困扰，主界面默认隐藏大部分参数，如果选中这里将切换为默认显示所有参数",
                 "process_max":"最大进程数，越大越快但可能爆内存，最大不应超过cpu核数减一\n(修改保存后重启生效)",
                 "process_max_gpu":"GPU任务同时执行数量，除非单卡显存大于20G，否则请设为1\n(修改保存后重启生效)",
-                "multi_gpus":"如果有多张显卡，且显存一致，可启用该项，同时可将上述选项设为2或显卡数\n(修改保存后重启生效)"
+                "multi_gpus":"如果有多张显卡，且显存一致，可启用该项，同时可将上述选项设为2或显卡数\n(修改保存后重启生效)",
+                "uvr_models":"选择分离背景声时所用模型"
             },
 
             "video": {
@@ -83,6 +84,7 @@ class Ui_setini(object):
                 "dubbing_wait": "每次配音后暂停秒数,用于限制请求频率",
                 "remove_dubb_silence":"移除每条字幕配音前后静音缓冲，利于音画同步，但可能结尾仓促",
                 "save_segment_audio": "保留每行字幕的配音结果",
+                "normal_text":"配音前对文本规范化处理",
                 "azure_lines": "Azure TTS批量配音行数，一次多少行",
                 "chattts_voice": "ChatTTS 音色值",
                 "edgetts_max_concurrent_tasks": "EdgeTTS渠道配音并发数，越大越快，但可能限流失败",
@@ -116,8 +118,8 @@ class Ui_setini(object):
                 "speaker_type": "用于说话人分离的模型，默认内置模型支持中英. \n若选 pyannote 必须拥有 https://huggingface.co 上的token，\n并且同意pyannote组织的授权协议\n\n具体请访问URL查看教程:\nhttps://pvt9.com/shuohuaren",
                 "hf_token": "填写你在 huggingface.co 的token，否则无法使用 pyannote，具体查看教程\nhttps://pvt9.com/shuohuaren",
 
-                "model_list": "faster模式和openai模式下的模型名字列表，英文逗号分隔",
-                "Whisper_cpp_models": "whisper.cpp模式下的模型名字列表，英文逗号分隔",
+                "model_list": "faster-whipser的模型列表，英文逗号分隔",
+                "Whisper_cpp_models": "whisper.cpp的模型名字列表，英文逗号分隔",
                 "cuda_com_type": "faster模式时cuda数据类型，int8=消耗资源少，速度快，精度低，float32=消耗资源多，速度慢，精度高，float16适合GPU加速。default默认自选",
                 "beam_size": "字幕识别时精度调整，1-5，1=消耗显存最低，5=消耗显存最多",
                 "best_of": "字幕识别时精度调整，1-5，1=消耗显存最低，5=消耗显存最多",
@@ -180,6 +182,8 @@ class Ui_setini(object):
             "aitrans_context":"AI翻译附带完整原字幕",
             "remove_dubb_silence":"移除配音前后静音缓冲",
             "first_hw":"视频合成优先硬编码",
+            "normal_text":"文本规范化",
+            "uvr_models":"分离背景声模型",
 
             "whisper_prepare": "Whisper预分割音频?",
             "temperature":"采样温度",
@@ -206,7 +210,7 @@ class Ui_setini(object):
             "azure_model": "Azure模型列表",
             "localllm_model": "本地LLM模型列表",
             "zijiehuoshan_model": "字节火山推理接入点",
-            "model_list": "faster/whisper模型",
+            "model_list": "faster-whisper模型",
             "Whisper_cpp_models": "whisper.cpp模型",
             "homedir": "设置输出目录",
             "lang": "软件界面语言",
@@ -302,7 +306,9 @@ class Ui_setini(object):
                     "show_more_settings": "To avoid confusion caused by too many parameters, most parameters are hidden by default on the main interface. Selecting this option will switch to displaying all parameters by default.",
                     "process_max":"Process Maximum",
                     "process_max_gpu":"The number of GPU tasks that can be executed simultaneously should be set to 1 unless the video memory is greater than 20GB.",
-                    "multi_gpus":"If you have multiple graphics cards with identical video memory, you can enable this option and set the above option to 2 or the number of graphics cards."
+                    "multi_gpus":"If you have multiple graphics cards with identical video memory, you can enable this option and set the above option to 2 or the number of graphics cards.",
+                    "uvr_models":"Select the model used when separating background noise."
+                    
                 },
                 "video": {
                     "crf": "Constant Rate Factor (CRF) for video quality. 0=lossless (huge file), 51=low quality (small file).",
@@ -325,6 +331,7 @@ class Ui_setini(object):
                     "dubbing_wait": "Delay (in seconds) between dubbing requests to prevent rate-limiting.",
                     "remove_dubb_silence":"Remove the mute buffer before and after each subtitle audio. Selecting this option will improve audio-visual synchronization, but may make the ending feel rushed.",
                     "save_segment_audio": "Save the dubbed audio for each individual subtitle line.",
+                    "normal_text":"Text normalization before dubbing",
                     "azure_lines": "Number of lines per batch request for Azure TTS.",
                     "edgetts_max_concurrent_tasks": "The higher the concurrent voice-over capacity of the EdgeTTS channel, the faster the speed, but rate throttling may fail.",
                     "edgetts_retry_nums": "Number of retries after EdgeTTS channel failure",
@@ -359,7 +366,7 @@ class Ui_setini(object):
 
                     "hf_token": "Enter your token from huggingface.co. Otherwise, you cannot use Pyannote speaker separation. \nFor details, please see the tutorial: \nhttps://pvt9.com/shuohuaren",
 
-                    "model_list": "Comma-separated list of model names for faster-whisper and OpenAI modes.",
+                    "model_list": "Comma-separated list of model names for faster-whisper modes.",
                     "Whisper_cpp_models": "Comma-separated list of model names for whisper.cpp mode.",
                     "cuda_com_type": "CUDA compute type for faster-whisper (e.g., int8, float16, float32).",
                     "beam_size": "Beam size for transcription (1-5). Higher is more accurate but uses more VRAM.",
@@ -426,6 +433,8 @@ class Ui_setini(object):
                 "temperature":"temperature",
                  "hotwords":"hotwords",
                 "remove_dubb_silence":"Remove the mute buffer each subtitle audio",
+                "normal_text":"Text Text normalization",
+                "uvr_models":"BGM separation model",
 
                 "repetition_penalty":"repetition penalty",
                 "compression_ratio_threshold":"compression ratio threshold",
@@ -449,7 +458,7 @@ class Ui_setini(object):
                 "azure_model": "Azure model list",
                 "localllm_model": "Local LLM model list",
                 "zijiehuoshan_model": "ByteDance Volcano Engine inference endpoint",
-                "model_list": "faster/whisper models",
+                "model_list": "faster-whisper models",
                 "Whisper_cpp_models": "whisper.cpp models",
                 "homedir": "Set output directory",
                 "lang": "Software interface language",
@@ -581,8 +590,20 @@ class Ui_setini(object):
                     combobox_data = ['ultrafast', 'superfast', 'veryfast', 'faster', 'fast', 'medium', 'slow', 'slower','veryslow']
                 elif key == "lang":
                     combobox_data=list(app_cfg.SUPPORT_LANG.keys())
+                elif key=='uvr_models':
+                    combobox_data=[
+                    'UVR-MDX-NET-Inst_HQ_4',
+                    'UVR-MDX-NET-Inst_HQ_1',
+                    'UVR-MDX-NET-Inst_HQ_2',
+                    'UVR-MDX-NET-Inst_HQ_3',
+                    'UVR-MDX-NET-Inst_HQ_5',
+                    'UVR-MDX-NET-Inst_Main',
+                    'UVR-MDX-NET-Inst_1',
+                    'UVR-MDX-NET-Inst_2',
+                    'UVR-MDX-NET-Inst_3'
+                    ]
 
-                if combobox_data and key in ['cuda_com_type','llm_ai_type','vad_type','speaker_type','video_codec','preset',"lang"]:
+                if combobox_data and key in ['cuda_com_type','llm_ai_type','vad_type','speaker_type','video_codec','preset',"lang",'uvr_models']:
                     tmp1 = QtWidgets.QComboBox()
                     tmp1.addItems(combobox_data)
 

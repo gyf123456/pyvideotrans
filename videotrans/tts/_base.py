@@ -66,25 +66,26 @@ class BaseTTS(BaseCon):
         if not self.queue_tts:
             raise RuntimeError(tr("No subtitles required"))
 
-        self.len = len(self.queue_tts)
         self.queue_tts = copy.deepcopy(self.queue_tts)
+        self.len = len(self.queue_tts)
         self._cleantts()
 
     def _cleantts(self):
         normalizer = None
-        if self.language[:2] == 'zh':
-            from videotrans.util.cn_tn import TextNorm
-            normalizer = TextNorm(to_banjiao=True)
-        elif self.language[:2] == 'en':
-            from videotrans.util.en_tn import EnglishNormalizer
-            normalizer = EnglishNormalizer()
+        if settings.get('normal_text'):
+            if self.language[:2] == 'zh':
+                from videotrans.util.cn_tn import TextNorm
+                normalizer = TextNorm(to_banjiao=True)
+            elif self.language[:2] == 'en':
+                from videotrans.util.en_tn import EnglishNormalizer
+                normalizer = EnglishNormalizer()
+        
         for i, it in enumerate(self.queue_tts):
-            text = it.get('text', '').strip()
-            if text and normalizer:
+            if it['text'].strip() and normalizer:
                 try:
-                    self.queue_tts[i]['text'] = normalizer(text)
+                    self.queue_tts[i]['text'] = normalizer(it['text'])
                 except:
-                    self.queue_tts[i]['text'] = text
+                    pass
 
         if "volume" in self.queue_tts[0]:
             self.volume = self.queue_tts[0]['volume']
@@ -195,7 +196,7 @@ class BaseTTS(BaseCon):
 
         self._signal(text=tr("Dubbing succeeded {}，failed {}", succeed_nums, len(self.queue_tts) - succeed_nums))
 
-    # 用于除  edge-tts 之外的渠道，在此进行单或多线程气动。调用 _item_task
+    # 用于除  edge-tts 之外的渠道，在此进行单或多线程。调用 _item_task
     # exec->_local_mul_thread->item_task
     def _local_mul_thread(self) -> None:
         if self._exit(): return
@@ -206,7 +207,7 @@ class BaseTTS(BaseCon):
                 if not item.get('text'):
                     continue
                 try:
-                    self._item_task(item)
+                    self._item_task(item,k)
                 except StopRetry:
                     # 属于致命错误，无需继续下个字幕配音,例如 api地址错误 api_name 不存在等
                     raise
@@ -225,7 +226,7 @@ class BaseTTS(BaseCon):
             for k, item in enumerate(self.queue_tts):
                 if not item.get('text'):
                     continue
-                future = pool.submit(self._item_task, item)
+                future = pool.submit(self._item_task, item,k)
                 all_task.append(future)
 
             completed_tasks = 0
@@ -255,7 +256,7 @@ class BaseTTS(BaseCon):
         pass
 
     # 每条字幕任务，由线程池调用 data_item 是 queue_tts 中每个元素
-    def _item_task(self, data_item: Union[Dict, List, None]) -> Union[bool, None]:
+    def _item_task(self, data_item: Union[Dict, List, None],idx:int=-1) -> Union[bool, None]:
         pass
 
     # 返回空白的16000采样率音频

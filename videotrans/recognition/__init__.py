@@ -1,5 +1,6 @@
 from typing import Union, List, Dict
-from videotrans.configure.config import tr,settings,params,app_cfg,logger
+from pathlib import Path
+from videotrans.configure.config import tr,settings,params,app_cfg,logger,ROOT_DIR
 from videotrans.recognition._huggingface import HuggingfaceRecogn
 from videotrans.recognition._overall import FasterAll
 
@@ -36,6 +37,7 @@ GOOGLE_SPEECH = 18
 STT_API = 19
 CUSTOM_API = 20
 WHISPER_NET = 21
+CAMB_ASR = 22
 
 _ID_NAME_DICT = {
     FASTER_WHISPER:tr("Faster-whisper"),
@@ -66,6 +68,7 @@ _ID_NAME_DICT = {
     STT_API:tr("STT Speech API"),
     CUSTOM_API:tr("Custom API"),
     WHISPER_NET:"Whisper.NET",
+    CAMB_ASR:"CAMB AI",
 }
 RECOGN_NAME_LIST=list(_ID_NAME_DICT.values())
 
@@ -86,6 +89,13 @@ HUGGINGFACE_ASR_MODELS={
 # "Systran/faster-whisper-tiny":[]
 
 }
+try:
+    if Path(f'{ROOT_DIR}/huggingface_models.txt').exists():
+        for it in Path(f'{ROOT_DIR}/huggingface_models.txt').read_text(encoding='utf-8').strip().split("\n"):
+            HUGGINGFACE_ASR_MODELS[it]=[]
+except Exception as e:
+    logger.waring(f'添加自定义 Huggingface_ASR 模型失败:{e}')
+
 # 判断所用渠道和模型是否支持该语言的语音识别
 # langcode=语言代码，recogn_type=识别渠道,model_name=模型名字
 def is_allow_lang(langcode: str = None, recogn_type: int = None, model_name=None):
@@ -97,7 +107,7 @@ def is_allow_lang(langcode: str = None, recogn_type: int = None, model_name=None
         return True
     if recogn_type==HUGGINGFACE_ASR and HUGGINGFACE_ASR_MODELS.get(model_name):
         if langcode not in HUGGINGFACE_ASR_MODELS[model_name]:
-            return _ID_NAME_DICT.get(recogn_type,'')+tr('Speech Recognit')+tr("Only support")+tr(HUGGINGFACE_ASR_MODELS[model_name])
+            return tr("Only support")+tr(HUGGINGFACE_ASR_MODELS[model_name])
         return True
     if (langcode == 'auto' or not langcode) and recogn_type not in [FASTER_WHISPER, OPENAI_WHISPER, GEMINI_SPEECH, ElevenLabs,Faster_Whisper_XXL,Whisper_CPP,WHISPERX_API,AI_302,OPENAI_API,WHISPER_NET]:
         return tr("Recognition language is only supported in faster-whisper or openai-whisper or Gemini  modes.")
@@ -175,6 +185,12 @@ def is_input_api(recogn_type: int = None, return_str=False):
             return "Please configure the API Key information of the Zhipu AI channel first."
         from videotrans.winform import zhipuai as zhipuai_win
         zhipuai_win.openwin()
+        return False
+    if recogn_type == CAMB_ASR and not params.get('camb_api_key',''):
+        if return_str:
+            return "Please configure the API Key information of the CAMB AI channel first."
+        from videotrans.winform import cambtts as cambasr_win
+        cambasr_win.openwin()
         return False
     return True
 
@@ -268,5 +284,9 @@ def run(*,
     if recogn_type == WHISPER_NET:
         from videotrans.recognition._whispernet import WhisperNetRecogn
         return WhisperNetRecogn(**kwargs).run()
+
+    if recogn_type == CAMB_ASR:
+        from videotrans.recognition._camb import CambRecogn
+        return CambRecogn(**kwargs).run()
 
     return FasterAll(**kwargs).run()

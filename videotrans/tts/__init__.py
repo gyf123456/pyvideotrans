@@ -1,12 +1,14 @@
 # 数字代表界面中的显示顺序
+import copy
+
 from videotrans.configure.config import tr,params,settings,app_cfg,logger
 from videotrans.tts._edgetts import EdgeTTS
 from videotrans.tts._qwentts import QWENTTS
 
 from videotrans.tts._minimaxi import MinimaxiTTS
-from videotrans.tts._azuretts import AzureTTS
 from videotrans.tts._freeazure import FreeAzureTTS
 from videotrans.tts._cosyvoice import CosyVoice
+from videotrans.tts._omnivoice import OmniVoice
 from videotrans.tts._ai302tts import AI302
 from videotrans.tts._chattts import ChatTTS
 from videotrans.tts._fishtts import FishTTS
@@ -25,46 +27,51 @@ from videotrans.tts._doubao2 import Doubao2TTS
 from videotrans.tts._f5tts import F5TTS
 from videotrans.tts._glmtts import GLMTTS
 from videotrans.tts._xaitts import XAITTS
+from videotrans.tts._mitts import MITTS
+from videotrans.tts._cambtts import CambTTS
 
 EDGE_TTS = 0
 QWEN3LOCAL_TTS = 1
-PIPER_TTS = 2
-VITSCNEN_TTS = 3
+OMNIVOICE_TTS = 2
+PIPER_TTS = 3
+VITSCNEN_TTS = 4
 
-QWEN_TTS = 4
-DOUBAO2_TTS = 5
-DOUBAO_TTS = 6
-GLM_TTS = 7
+QWEN_TTS = 5
+DOUBAO2_TTS = 6
+DOUBAO_TTS = 7
+GLM_TTS = 8
 
-GPTSOVITS_TTS = 8
-F5_TTS = 9
-INDEX_TTS = 10
-COSYVOICE_TTS = 11
-Supertonic_TTS = 12
+GPTSOVITS_TTS = 9
+F5_TTS = 10
+INDEX_TTS = 11
+COSYVOICE_TTS = 12
+Supertonic_TTS = 13
 
-MINIMAXI_TTS = 13
-OPENAI_TTS = 14
-AI302_TTS = 15
-ELEVENLABS_TTS = 16
-AZURE_TTS = 17
-GEMINI_TTS = 18
+MINIMAXI_TTS = 14
+OPENAI_TTS = 15
+AI302_TTS = 16
+ELEVENLABS_TTS = 17
+AZURE_TTS = 18
+GEMINI_TTS = 19
 
-VOXCPM_TTS = 19
-CHATTERBOX_TTS = 20
-CHATTTS = 21
-SPARK_TTS = 22
-DIA_TTS = 23
-KOKORO_TTS = 24
-CLONE_VOICE_TTS = 25
-FISHTTS = 26
+VOXCPM_TTS = 20
+CHATTERBOX_TTS = 21
+CHATTTS = 22
+SPARK_TTS = 23
+DIA_TTS = 24
+KOKORO_TTS = 25
+CLONE_VOICE_TTS = 26
+FISHTTS = 27
 
-FreeAzure = 27
+FreeAzure = 28
 
-GOOGLE_TTS = 28
+GOOGLE_TTS = 29
 
-XAI_TTS = 29
-TTS_API = 30
-GOOGLECLOUD_TTS = 31
+XAI_TTS = 30
+XIAOMI_TTS = 31
+TTS_API = 32
+CAMB_TTS = 33
+
 
 # 支持克隆的渠道
 SUPPORT_CLONE=[
@@ -76,11 +83,14 @@ SUPPORT_CLONE=[
     DIA_TTS,
     CHATTERBOX_TTS,
     GPTSOVITS_TTS,
-    QWEN3LOCAL_TTS
+    QWEN3LOCAL_TTS,
+    CAMB_TTS,
+    OMNIVOICE_TTS
 ]
 _ID_NAME_DICT = {
     EDGE_TTS: tr("Edge-TTS(free)"),
     QWEN3LOCAL_TTS: f"Qwen3-TTS({tr('Local')})",
+    OMNIVOICE_TTS: "OmniVoice",
     PIPER_TTS: f'piper TTS({tr("Local")})',
     VITSCNEN_TTS: f'VITS({tr("Local")})',
 
@@ -116,9 +126,10 @@ _ID_NAME_DICT = {
     GOOGLE_TTS: "gTTS(free)",
 
     XAI_TTS: 'X.AI TTS',
+    XIAOMI_TTS:'xiaomi TTS',
     TTS_API: tr("Customize API"),
 
-    # GOOGLECLOUD_TTS:"Google Cloud TTS",
+    CAMB_TTS: "CAMB AI TTS",
 }
 
 TTS_NAME_LIST = list(_ID_NAME_DICT.values())
@@ -169,7 +180,12 @@ def is_input_api(tts_type: int = None, return_str=False):
         from videotrans.winform import xaitts as xaitts_win
         xaitts_win.openwin()
         return False
-
+    if tts_type == XIAOMI_TTS and not params.get("mitts_key", ''):
+        if return_str:
+            return "Please configure the api key information of the xiaomi TTS  channel first."
+        from videotrans.winform import mitts as mitts_win
+        mitts_win.openwin()
+        return False
     
     if tts_type == MINIMAXI_TTS and not params.get("minimaxi_apikey", ''):
         if return_str:
@@ -224,6 +240,12 @@ def is_input_api(tts_type: int = None, return_str=False):
             return "Please configure the api and key information of the CosyVoice channel first."
         from videotrans.winform import cosyvoice as cosyvoice_win
         cosyvoice_win.openwin()
+        return False
+    if tts_type == OMNIVOICE_TTS and not params.get('omnivoice_url', ''):
+        if return_str:
+            return "Please configure the api and key information of the OmniVoice channel first."
+        from videotrans.winform import omnivoice as omnivoice_win
+        omnivoice_win.openwin()
         return False
     if tts_type == FISHTTS and not params.get('fishtts_url', ''):
         if return_str:
@@ -290,11 +312,11 @@ def is_input_api(tts_type: int = None, return_str=False):
         from videotrans.winform import f5tts as f5tts_win
         f5tts_win.openwin()
         return False
-    if tts_type == GOOGLECLOUD_TTS and not params.get('gcloud_credential_json'):
+    if tts_type == CAMB_TTS and not params.get('camb_api_key', ''):
         if return_str:
-            return "Please configure the Google Cloud credentials first."
-        from videotrans.winform import googlecloud as googlecloud_win
-        googlecloud_win.openwin()
+            return "Please configure the API key information of the CAMB AI TTS channel first."
+        from videotrans.winform import cambtts as cambtts_win
+        cambtts_win.openwin()
         return False
     if tts_type == GLM_TTS and not params.get('zhipu_key'):
         if return_str:
@@ -319,7 +341,7 @@ def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, 
         return
 
     kwargs = {
-        "queue_tts": queue_tts,
+        "queue_tts": copy.deepcopy(queue_tts),
         "language": language,
         "uuid": uuid,
         "play": play,
@@ -328,6 +350,7 @@ def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, 
         "is_cuda":is_cuda
     }
     if tts_type == AZURE_TTS:
+        from videotrans.tts._azuretts import AzureTTS
         AzureTTS(**kwargs).run()
     elif tts_type == FreeAzure:
         FreeAzureTTS(**kwargs).run()
@@ -385,3 +408,9 @@ def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, 
         SupertonicTTS(**kwargs).run()
     elif tts_type == XAI_TTS:
         XAITTS(**kwargs).run()
+    elif tts_type == XIAOMI_TTS:
+        MITTS(**kwargs).run()
+    elif tts_type == CAMB_TTS:
+        CambTTS(**kwargs).run()
+    elif tts_type == OMNIVOICE_TTS:
+        OmniVoice(**kwargs).run()

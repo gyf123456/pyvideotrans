@@ -18,6 +18,7 @@ from videotrans.ui.chattts import Ui_chatttsform
 from videotrans.ui.doubao2 import Ui_doubao2form
 from videotrans.ui.clone import Ui_cloneform
 from videotrans.ui.cosyvoice import Ui_cosyvoiceform
+from videotrans.ui.omnivoice import Ui_omnivoiceform
 from videotrans.ui.deepgram import Ui_deepgramform
 from videotrans.ui.deepl import Ui_deeplform
 from videotrans.ui.deeplx import Ui_deeplxform
@@ -41,6 +42,7 @@ from videotrans.ui.minimax import Ui_minimaxform
 from videotrans.ui.openairecognapi import Ui_openairecognapiform
 from videotrans.ui.openaitts import Ui_openaittsform
 from videotrans.ui.xaitts import Ui_xaittsform
+from videotrans.ui.mitts import Ui_mittsform
 from videotrans.ui.openrouter import Ui_openrouterform
 from videotrans.ui.ott import Ui_ottform
 from videotrans.ui.parakeet import Ui_parakeetform
@@ -71,6 +73,9 @@ from videotrans.ui.dewatermark import Ui_dewatermark
 from videotrans.ui.zhipuai import Ui_zhipuaiform
 from videotrans.ui.zijiehuoshan import Ui_zijiehuoshanform
 from videotrans.ui.zijierecognmodel import Ui_zijierecognform
+from videotrans.ui.cambtts import Ui_cambttsform
+from videotrans.ui.cambtrans import Ui_cambtransform
+from videotrans.ui.cambasr import Ui_cambasrform
 
 
 class CommonBaseMixin:
@@ -129,6 +134,9 @@ class OpenAITTSForm(QDialogBase, Ui_openaittsform):  # <===
 class XAITTSForm(QDialogBase, Ui_xaittsform):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
+class MITTSForm(QDialogBase, Ui_mittsform):  # <===
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
 
 class QwenTTSForm(QDialogBase, Ui_qwenttsform):  # <===
@@ -181,6 +189,9 @@ class ChatterboxForm(QDialogBase, Ui_chatterboxform):  # <===
 
 
 class CosyVoiceForm(QDialogBase, Ui_cosyvoiceform):  # <===
+    def __init__(self, parent=None):
+        super().__init__(parent)
+class OmniVoiceForm(QDialogBase, Ui_omnivoiceform):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
 class QwenttsLocalForm(QDialogBase, Ui_qwenttslocal):  # <===
@@ -319,6 +330,18 @@ class Doubao2TTSForm(QDialogBase, Ui_doubao2form):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
 class ZijierecognmodelForm(QDialogBase, Ui_zijierecognform):  # <===
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+class CambTTSForm(QDialogBase, Ui_cambttsform):  # <===
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+class CambTransForm(QDialogBase, Ui_cambtransform):  # <===
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+class CambASRForm(QDialogBase, Ui_cambasrform):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
 

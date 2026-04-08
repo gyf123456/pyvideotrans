@@ -351,7 +351,9 @@ def openwin():
         toggle_state(True)
         if len(winobj.hecheng_importbtn.filelist) > 0 and winobj.save_to_srt.isChecked():
             RESULT_DIR = Path(winobj.hecheng_importbtn.filelist[0]).parent.as_posix()
-
+        else:
+            RESULT_DIR=HOME_DIR + "/tts"
+            
         if txt:
             newsrtfile = TEMP_DIR + f"/{datetime.now().strftime('%Y%m%d-%H%M%S')}."
             is_srt = re.match(
@@ -469,6 +471,8 @@ def openwin():
             role_list=['No']+params.get('openaitts_role',contants.OPENAITTS_ROLES).split(',')
         elif type == tts.XAI_TTS:
             role_list=['No']+contants.XAITTS_ROLES.split(',')
+        elif type == tts.XIAOMI_TTS:
+            role_list=['No']+contants.MITTS_ROLES.split(',')
         elif type == tts.QWEN_TTS:
             role_list=list(tools.get_qwen3tts_rolelist().keys())
         elif type == tts.QWEN3LOCAL_TTS:
@@ -481,6 +485,8 @@ def openwin():
             role_list.extend(contants.GEMINITTS_ROLES.split(','))
         elif type == tts.ELEVENLABS_TTS:
             role_list =  tools.get_elevenlabs_role()
+        elif type == tts.CAMB_TTS:
+            role_list = tools.get_camb_role()
         elif type == tts.CLONE_VOICE_TTS:
             role_list.extend([it for it in params["clone_voicelist"] if it != 'clone'])
         elif type == tts.TTS_API:
@@ -491,6 +497,8 @@ def openwin():
             role_list = tools.get_chatterbox_role()
         elif type == tts.COSYVOICE_TTS:
             role_list = list(tools.get_cosyvoice_role().keys())
+        elif type == tts.OMNIVOICE_TTS:
+            role_list = list(tools.get_omnivoice_role().keys())
         elif type == tts.FISHTTS:
             role_list = list(tools.get_fishtts_role().keys())
         elif type in [tts.F5_TTS,tts.INDEX_TTS,tts.SPARK_TTS,tts.VOXCPM_TTS,tts.DIA_TTS]:

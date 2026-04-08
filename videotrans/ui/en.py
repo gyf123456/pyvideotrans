@@ -295,7 +295,7 @@ class Ui_MainWindow(object):
         
         
         self.set_adv_status=QtWidgets.QPushButton()
-        self.set_adv_status.setStyleSheet("background-color:transparent;border:1px solid #455364")
+        #self.set_adv_status.setStyleSheet("background-color:transparent;border:1px solid #455364")
         self.set_adv_status.setText(tr('More settings'))
         self.set_adv_status.setCursor(Qt.PointingHandCursor)
 
@@ -334,6 +334,11 @@ class Ui_MainWindow(object):
         self.is_separate.setMinimumSize(QtCore.QSize(0, 30))
         self.is_separate.setObjectName("is_separate")
         self.is_separate.setVisible(False)
+        self.embed_bgm = QtWidgets.QCheckBox(self.layoutWidget)
+        self.embed_bgm.setMinimumSize(QtCore.QSize(0, 30))
+        self.embed_bgm.setObjectName("embed_bgm")
+        self.embed_bgm.setChecked(True)
+        self.embed_bgm.setVisible(False)
 
         self.addbackbtn = QtWidgets.QPushButton(self.layoutWidget)
         self.addbackbtn.setObjectName("addbackbtn")
@@ -345,12 +350,9 @@ class Ui_MainWindow(object):
         self.back_audio.setVisible(False)
 
         # 是否循环播放背景
-        self.is_loop_bgm = QtWidgets.QCheckBox(self.layoutWidget)
-        self.is_loop_bgm.setChecked(True)
+        self.is_loop_bgm = QtWidgets.QComboBox(self.layoutWidget)
+        self.is_loop_bgm.addItems([tr('The bgm briefly lengthens'),tr('loop the BGM')])
         self.is_loop_bgm.setVisible(False)
-        self.is_loop_bgm.setText(tr("loop the BGM"))
-        self.is_loop_bgm.setToolTip(
-            tr("Whether to loop the background music when the duration is insufficient"))
 
         self.bgmvolume_label = QtWidgets.QLabel()
         self.bgmvolume_label.setText(tr("Volume BGM"))
@@ -363,6 +365,7 @@ class Ui_MainWindow(object):
             tr("BGM volume is a multiple of the original volume, greater than 1 increases, less than decreases"))
 
         self.bgm_layout.addWidget(self.is_separate)
+        self.bgm_layout.addWidget(self.embed_bgm)
         self.bgm_layout.addWidget(self.is_loop_bgm)
         self.bgm_layout.addWidget(self.bgmvolume_label)
         self.bgm_layout.addWidget(self.bgmvolume)
@@ -404,7 +407,7 @@ class Ui_MainWindow(object):
         self.othlinenums.setObjectName("othlinenums")
         self.othlinenums.setValue(int(settings.get('other_len', 60)))
         self.set_ass=QtWidgets.QPushButton()
-        self.set_ass.setStyleSheet("background-color:transparent;border:1px solid #455364")
+        #self.set_ass.setStyleSheet("background-color:transparent;border:1px solid #455364")
         self.set_ass.setText(tr('Modify hard subtitle style'))
         self.set_ass.setCursor(Qt.PointingHandCursor)
         self.set_ass.setVisible(False)
@@ -754,6 +757,8 @@ class Ui_MainWindow(object):
         self.actionopenaitts_key.setObjectName("actionopenaitts_key")
         self.actionxaitts_key = QtGui.QAction(MainWindow)
         self.actionxaitts_key.setObjectName("actionxaitts_key")
+        self.actionmitts_key = QtGui.QAction(MainWindow)
+        self.actionmitts_key.setObjectName("actionmitts_key")
         self.actionqwentts_key = QtGui.QAction(MainWindow)
         self.actionqwentts_key.setObjectName("actionqwentts_key")
         self.actionopenairecognapi_key = QtGui.QAction(MainWindow)
@@ -825,6 +830,8 @@ class Ui_MainWindow(object):
 
         self.actiontts_cosyvoice = QtGui.QAction(MainWindow)
         self.actiontts_cosyvoice.setObjectName("actiontts_cosyvoice")
+        self.actiontts_omnivoice = QtGui.QAction(MainWindow)
+        self.actiontts_omnivoice.setObjectName("actiontts_omnivoice")
         self.actiontts_qwenttslocal = QtGui.QAction(MainWindow)
         self.actiontts_qwenttslocal.setObjectName("actiontts_qwenttslocal")
         self.actiontts_fishtts = QtGui.QAction(MainWindow)
@@ -904,6 +911,8 @@ class Ui_MainWindow(object):
         self.actionazure_key.setObjectName("actionazure_key")
         self.actiongemini_key = QtGui.QAction(MainWindow)
         self.actiongemini_key.setObjectName("actiongemini_key")
+        self.actioncamb_key = QtGui.QAction(MainWindow)
+        self.actioncamb_key.setObjectName("actioncamb_key")
         self.actionElevenlabs_key = QtGui.QAction(MainWindow)
         self.actionElevenlabs_key.setObjectName("actionElevenlabs_key")
         self.actionwatermark = QtGui.QAction(MainWindow)
@@ -962,6 +971,8 @@ class Ui_MainWindow(object):
         self.menu_Key.addSeparator()
         self.menu_Key.addAction(self.actiongemini_key)
         self.menu_Key.addSeparator()
+        self.menu_Key.addAction(self.actioncamb_key)
+        self.menu_Key.addSeparator()
         self.menu_Key.addAction(self.actiondeepL_key)
         self.menu_Key.addSeparator()
         self.menu_Key.addAction(self.actiondeepLX_address)
@@ -979,6 +990,8 @@ class Ui_MainWindow(object):
         self.menu_TTS.addAction(self.actionchattts_address)
         self.menu_TTS.addSeparator()
         self.menu_TTS.addAction(self.actiontts_gptsovits)
+        self.menu_TTS.addSeparator()
+        self.menu_TTS.addAction(self.actiontts_omnivoice)
         self.menu_TTS.addSeparator()
         self.menu_TTS.addAction(self.actiontts_cosyvoice)
         self.menu_TTS.addSeparator()
@@ -999,6 +1012,8 @@ class Ui_MainWindow(object):
         self.menu_TTS.addAction(self.actionElevenlabs_key)
         self.menu_TTS.addSeparator()
         self.menu_TTS.addAction(self.actionazure_tts)
+        self.menu_TTS.addSeparator()
+        self.menu_TTS.addAction(self.actionmitts_key)
         self.menu_TTS.addSeparator()
         self.menu_TTS.addAction(self.actionxaitts_key)
         self.menu_TTS.addSeparator()

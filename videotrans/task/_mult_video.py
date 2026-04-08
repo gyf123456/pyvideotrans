@@ -1,6 +1,6 @@
 import shutil,json
 from pathlib import Path
-
+import traceback
 from PySide6.QtCore import QThread,Signal
 
 from videotrans.configure._except import get_msg_from_except
@@ -38,6 +38,7 @@ class MultVideo(QThread):
                     trk.trans()
                     trk.dubbing()
                     trk.align()
+                    trk.recogn2pass()
                     trk.assembling()
                     trk.task_done()
                     self.uito.emit(json.dumps({"text": tr('Succeed'), "type": 'succeed', 'uuid': it['uuid']}))
@@ -46,8 +47,9 @@ class MultVideo(QThread):
                     app_cfg.prepare_queue.put_nowait(trk)
             except Exception as e:
                 _msg=get_msg_from_except(e)
+                detail_back=(traceback.format_exc()).strip()
                 if self.batch_single:
-                    self.uito.emit(json.dumps({"text": _msg, "type": "error", 'uuid': it['uuid']}))
+                    self.uito.emit(json.dumps({"text": _msg+f"\n{detail_back}", "type": "error", 'uuid': it['uuid']}))
                 else:
-                    tools.set_process(text=_msg,type="error",uuid=it['uuid'])
+                    tools.set_process(text=_msg+f"\n{deta}",type="error",uuid=it['uuid'])
 
